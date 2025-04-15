@@ -1,0 +1,21 @@
+# 构建输出
+dist/
+.cache/
+
+# 依赖
+node_modules/
+
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 编辑器文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 操作系统相关
+.DS_Store
+Thumbs.db 
