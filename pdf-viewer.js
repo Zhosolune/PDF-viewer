@@ -57,6 +57,12 @@ function initViewer() {
     let dropZone = document.getElementById('drop-zone');
     let textLayer = document.getElementById('text-layer');
     let pdfFilename = document.getElementById('pdf-filename');
+    let canvasContainer = document.getElementById('canvas-container');
+    
+    // 视图模式相关
+    let isDoublePageView = false;
+    let singlePageViewBtn = document.getElementById('single-page-view');
+    let doublePageViewBtn = document.getElementById('double-page-view');
     
     // 搜索相关变量
     let searchInput = document.getElementById('search-input');
@@ -137,7 +143,16 @@ function initViewer() {
      * 清除文本搜索结果
      */
     function clearTextLayer() {
-        textLayer.innerHTML = '';
+        if (isDoublePageView) {
+            // 双页视图模式下清除所有文本层
+            const textLayers = document.querySelectorAll('.page-text-layer');
+            textLayers.forEach(layer => {
+                layer.innerHTML = '';
+            });
+        } else {
+            // 单页视图模式
+            textLayer.innerHTML = '';
+        }
     }
 
     /**
@@ -172,19 +187,46 @@ function initViewer() {
         
         if (currentSearchMatches.length === 0) return;
         
-        // 获取当前页的匹配项
-        const pageMatches = currentSearchMatches.filter(match => match.pageNum === pageNum);
+        // 获取当前显示页面的匹配项
+        let visibleMatches = [];
         
-        if (pageMatches.length === 0) return;
+        if (isDoublePageView) {
+            // 双页视图模式，获取当前显示的两页上的匹配项
+            const leftPageNum = pageNum;
+            const rightPageNum = pageNum + 1 <= pdfDoc.numPages ? pageNum + 1 : -1;
+            
+            visibleMatches = currentSearchMatches.filter(match => 
+                match.pageNum === leftPageNum || match.pageNum === rightPageNum
+            );
+        } else {
+            // 单页视图模式
+            visibleMatches = currentSearchMatches.filter(match => match.pageNum === pageNum);
+        }
         
-        // 获取canvas尺寸，用于确保高亮正确定位
-        const canvasRect = canvas.getBoundingClientRect();
+        if (visibleMatches.length === 0) return;
         
         // 创建所有匹配项的高亮
-        pageMatches.forEach((match, index) => {
+        visibleMatches.forEach((match, index) => {
             const globalIndex = currentSearchMatches.indexOf(match);
             const matchElement = document.createElement('div');
             matchElement.className = 'text-match';
+            
+            // 在双页视图模式下，需要确定匹配项属于哪一页
+            let targetTextLayer;
+            
+            if (isDoublePageView) {
+                const pageWrappers = canvasContainer.querySelectorAll('.page-wrapper');
+                if (match.pageNum === pageNum) {
+                    // 匹配项在左页
+                    targetTextLayer = pageWrappers[0].querySelector('.page-text-layer');
+                } else {
+                    // 匹配项在右页
+                    targetTextLayer = pageWrappers[1].querySelector('.page-text-layer');
+                }
+            } else {
+                // 单页视图直接使用文本层
+                targetTextLayer = textLayer;
+            }
             
             // 设置高亮位置和大小
             matchElement.style.left = `${match.left}px`;
@@ -219,7 +261,9 @@ function initViewer() {
                 }, 100);
             }
             
-            textLayer.appendChild(matchElement);
+            if (targetTextLayer) {
+                targetTextLayer.appendChild(matchElement);
+            }
         });
         
         // 更新匹配计数
@@ -288,6 +332,44 @@ function initViewer() {
         // 清除文本层
         clearTextLayer();
         
+        if (isDoublePageView) {
+            // 双页视图模式
+            renderDoublePageView(num, isSearchNavigation);
+        } else {
+            // 单页视图模式
+            renderSinglePageView(num, isSearchNavigation);
+        }
+        
+        // 更新页码输入框
+        currentPageInput.value = num;
+    }
+    
+    /**
+     * 渲染单页视图
+     * @param {number} num 页码
+     * @param {boolean} isSearchNavigation 是否是搜索导航引起的渲染
+     */
+    function renderSinglePageView(num, isSearchNavigation = false) {
+        // 确保canvas容器为默认状态
+        canvasContainer.classList.remove('double-view');
+        
+        // 清除可能存在的多余页面
+        while (canvasContainer.children.length > 0) {
+            canvasContainer.removeChild(canvasContainer.firstChild);
+        }
+        
+        // 重新添加单页canvas和文本层
+        canvas = document.createElement('canvas');
+        canvas.id = 'pdf-viewer';
+        textLayer = document.createElement('div');
+        textLayer.id = 'text-layer';
+        textLayer.className = 'text-layer';
+        
+        canvasContainer.appendChild(canvas);
+        canvasContainer.appendChild(textLayer);
+        
+        ctx = canvas.getContext('2d');
+        
         // 获取页面
         pdfDoc.getPage(num).then(function(page) {
             // 计算缩放后的视图
@@ -353,9 +435,133 @@ function initViewer() {
             pageRendering = false;
             spinner.style.display = 'none';
         });
+    }
+    
+    /**
+     * 渲染双页视图
+     * @param {number} num 起始页码
+     * @param {boolean} isSearchNavigation 是否是搜索导航引起的渲染
+     */
+    function renderDoublePageView(num, isSearchNavigation = false) {
+        // 设置双页视图样式
+        canvasContainer.classList.add('double-view');
         
-        // 更新页码输入框
-        currentPageInput.value = num;
+        // 清除现有内容
+        while (canvasContainer.children.length > 0) {
+            canvasContainer.removeChild(canvasContainer.firstChild);
+        }
+        
+        // 确保起始页码为奇数（除第一页外）
+        let leftPageNum = num;
+        if (num > 1 && num % 2 === 0) {
+            leftPageNum = num - 1;
+        }
+        
+        // 计算右页页码
+        let rightPageNum = leftPageNum + 1;
+        
+        // 检查右页是否超出文档页数
+        const hasRightPage = rightPageNum <= pdfDoc.numPages;
+        
+        // 创建左页容器
+        const leftPageWrapper = document.createElement('div');
+        leftPageWrapper.className = 'page-wrapper';
+        const leftCanvas = document.createElement('canvas');
+        leftCanvas.className = 'page-canvas';
+        leftCanvas.dataset.pageNum = leftPageNum;
+        const leftTextLayer = document.createElement('div');
+        leftTextLayer.className = 'page-text-layer';
+        leftPageWrapper.appendChild(leftCanvas);
+        leftPageWrapper.appendChild(leftTextLayer);
+        canvasContainer.appendChild(leftPageWrapper);
+        
+        // 渲染左页
+        renderPageToCanvas(leftPageNum, leftCanvas, leftTextLayer, isSearchNavigation)
+        .then(() => {
+            // 只有在有右页且未超出文档页数时才渲染右页
+            if (hasRightPage) {
+                // 创建右页容器
+                const rightPageWrapper = document.createElement('div');
+                rightPageWrapper.className = 'page-wrapper';
+                const rightCanvas = document.createElement('canvas');
+                rightCanvas.className = 'page-canvas';
+                rightCanvas.dataset.pageNum = rightPageNum;
+                const rightTextLayer = document.createElement('div');
+                rightTextLayer.className = 'page-text-layer';
+                rightPageWrapper.appendChild(rightCanvas);
+                rightPageWrapper.appendChild(rightTextLayer);
+                canvasContainer.appendChild(rightPageWrapper);
+                
+                // 渲染右页
+                return renderPageToCanvas(rightPageNum, rightCanvas, rightTextLayer, isSearchNavigation);
+            }
+        })
+        .then(() => {
+            pageRendering = false;
+            spinner.style.display = 'none';
+            
+            // 如果有搜索结果，重新渲染匹配项
+            if (currentSearchMatches.length > 0) {
+                renderTextMatches();
+            }
+            
+            if (pageNumPending !== null) {
+                const pendingIsSearchNavigation = window.isSearchNavigationPending || false;
+                window.isSearchNavigationPending = false;
+                renderPage(pageNumPending, pendingIsSearchNavigation);
+                pageNumPending = null;
+            }
+        })
+        .catch(error => {
+            console.error('渲染双页视图时出错:', error);
+            showMessage('渲染页面时出错', 'error');
+            pageRendering = false;
+            spinner.style.display = 'none';
+        });
+    }
+    
+    /**
+     * 渲染单个页面到指定的Canvas
+     * @param {number} pageNum 页码
+     * @param {HTMLCanvasElement} targetCanvas 目标Canvas
+     * @param {HTMLElement} targetTextLayer 目标文本层
+     * @param {boolean} isSearchNavigation 是否是搜索导航
+     * @returns {Promise} 渲染完成的Promise
+     */
+    function renderPageToCanvas(pageNum, targetCanvas, targetTextLayer, isSearchNavigation = false) {
+        return pdfDoc.getPage(pageNum).then(function(page) {
+            // 计算缩放后的视图
+            var viewport = page.getViewport({ scale: scale });
+            targetCanvas.height = viewport.height;
+            targetCanvas.width = viewport.width;
+            
+            // 设置文本层的尺寸与Canvas一致
+            targetTextLayer.style.height = `${viewport.height}px`;
+            targetTextLayer.style.width = `${viewport.width}px`;
+            
+            // 渲染PDF页面
+            var renderContext = {
+                canvasContext: targetCanvas.getContext('2d'),
+                viewport: viewport
+            };
+            
+            var renderTask = page.render(renderContext);
+            
+            // 在每次渲染时更新当前页面的文本内容缓存
+            return page.getTextContent().then(function(textContent) {
+                pageTextContent[pageNum] = {
+                    textItems: textContent.items,
+                    viewport: viewport
+                };
+                
+                // 处理搜索结果的更新，但避免重复搜索
+                if (!isSearchNavigation && currentSearchMatches.length > 0 && searchInput.value.trim() !== '') {
+                    updateSearchMatchesForCurrentPage();
+                }
+                
+                return renderTask.promise;
+            });
+        });
     }
 
     /**
@@ -580,7 +786,23 @@ function initViewer() {
         if (pageNum <= 1) {
             return;
         }
-        pageNum--;
+        
+        if (isDoublePageView) {
+            // 双页视图模式下，每次移动2页
+            // 确保最终页码为奇数（除非是第一页）
+            if (pageNum > 2) {
+                pageNum = pageNum - 2;
+                if (pageNum > 1 && pageNum % 2 === 0) {
+                    pageNum--; // 确保为奇数页
+                }
+            } else {
+                pageNum = 1;
+            }
+        } else {
+            // 单页视图，每次移动1页
+            pageNum--;
+        }
+        
         queueRenderPage(pageNum);
     }
 
@@ -588,10 +810,34 @@ function initViewer() {
      * 显示下一页
      */
     function onNextPage() {
-        if (!pdfDoc || pageNum >= pdfDoc.numPages) {
+        if (!pdfDoc) {
             return;
         }
-        pageNum++;
+        
+        if (isDoublePageView) {
+            // 双页视图模式下，每次移动2页
+            const nextPage = pageNum + 2;
+            if (nextPage <= pdfDoc.numPages) {
+                pageNum = nextPage;
+                // 确保为奇数页
+                if (pageNum > 1 && pageNum % 2 === 0) {
+                    pageNum--; // 确保为奇数页
+                }
+            } else if (pageNum < pdfDoc.numPages) {
+                // 处理最后一页或倒数第二页的情况
+                if (pageNum % 2 === 1) {
+                    pageNum = pageNum + 2 > pdfDoc.numPages ? pdfDoc.numPages : pageNum + 2;
+                } else {
+                    pageNum = pageNum + 1 > pdfDoc.numPages ? pdfDoc.numPages : pageNum + 1;
+                }
+            }
+        } else {
+            // 单页视图，每次移动1页
+            if (pageNum < pdfDoc.numPages) {
+                pageNum++;
+            }
+        }
+        
         queueRenderPage(pageNum);
     }
 
@@ -641,7 +887,16 @@ function initViewer() {
             return;
         }
         
-        pageNum = newPageNum;
+        // 设置新页码
+        let targetPageNum = newPageNum;
+        
+        // 在双页视图模式下，确保页码为奇数（除第一页外）
+        if (isDoublePageView && newPageNum > 1 && newPageNum % 2 === 0) {
+            targetPageNum = newPageNum - 1;
+            showMessage(`在双页视图模式下调整到页码 ${targetPageNum}`, 'info');
+        }
+        
+        pageNum = targetPageNum;
         queueRenderPage(pageNum);
     }
 
@@ -672,9 +927,12 @@ function initViewer() {
                     scale = 1.0;
                     zoomLevel.textContent = Math.round(scale * 100);
                     
+                    // 默认使用单页视图
+                    isDoublePageView = false;
+                    updateViewModeButtons();
+                    
                     // 更新UI状态，显示PDF内容
                     document.querySelector('.pdf-container').classList.add('has-pdf');
-                    canvas.classList.add('active');
                     
                     // 清除任何现有的搜索结果
                     resetSearch();
@@ -708,9 +966,24 @@ function initViewer() {
         // 重置UI
         document.querySelector('.pdf-container').classList.remove('has-pdf');
         canvas.classList.remove('active');
+        canvasContainer.classList.remove('double-view');
         
-        // 清除canvas内容
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 清除canvas容器内容
+        while (canvasContainer.children.length > 0) {
+            canvasContainer.removeChild(canvasContainer.firstChild);
+        }
+        
+        // 重新添加单页canvas和文本层
+        canvas = document.createElement('canvas');
+        canvas.id = 'pdf-viewer';
+        textLayer = document.createElement('div');
+        textLayer.id = 'text-layer';
+        textLayer.className = 'text-layer';
+        
+        canvasContainer.appendChild(canvas);
+        canvasContainer.appendChild(textLayer);
+        
+        ctx = canvas.getContext('2d');
         
         // 重置页码显示
         pageCount.textContent = '0';
@@ -799,6 +1072,38 @@ function initViewer() {
                 if (pdfDoc) {
                     pageNum = pdfDoc.numPages;
                     queueRenderPage(pageNum);
+                    event.preventDefault();
+                }
+                break;
+            case '1':
+                if (event.ctrlKey) {
+                    // Ctrl+1: 切换到单页视图
+                    if (isDoublePageView) {
+                        isDoublePageView = false;
+                        updateViewModeButtons();
+                        if (pdfDoc) {
+                            queueRenderPage(pageNum);
+                        }
+                        showMessage('已切换到单页视图', 'info');
+                    }
+                    event.preventDefault();
+                }
+                break;
+            case '2':
+                if (event.ctrlKey) {
+                    // Ctrl+2: 切换到双页视图
+                    if (!isDoublePageView) {
+                        isDoublePageView = true;
+                        updateViewModeButtons();
+                        if (pdfDoc) {
+                            // 确保页码为奇数（除非是第一页）
+                            if (pageNum > 1 && pageNum % 2 === 0) {
+                                pageNum--;
+                            }
+                            queueRenderPage(pageNum);
+                        }
+                        showMessage('已切换到双页视图', 'info');
+                    }
                     event.preventDefault();
                 }
                 break;
@@ -943,6 +1248,51 @@ function initViewer() {
     document.getElementById('zoom-out').addEventListener('click', zoomOut);
     document.getElementById('file-input').addEventListener('change', onFileSelected);
     currentPageInput.addEventListener('change', onPageNumberChanged);
+    
+    // 添加视图模式切换功能
+    singlePageViewBtn.addEventListener('click', function() {
+        if (isDoublePageView) {
+            isDoublePageView = false;
+            updateViewModeButtons();
+            if (pdfDoc) {
+                // 重新渲染当前页面
+                queueRenderPage(pageNum);
+            }
+            showMessage('已切换到单页视图', 'info');
+        }
+    });
+    
+    doublePageViewBtn.addEventListener('click', function() {
+        if (!isDoublePageView) {
+            isDoublePageView = true;
+            updateViewModeButtons();
+            if (pdfDoc) {
+                // 确保页码为奇数（除非是第一页）
+                if (pageNum > 1 && pageNum % 2 === 0) {
+                    pageNum--;
+                }
+                // 重新渲染当前页面
+                queueRenderPage(pageNum);
+            }
+            showMessage('已切换到双页视图', 'info');
+        }
+    });
+    
+    /**
+     * 更新视图模式按钮状态
+     */
+    function updateViewModeButtons() {
+        if (isDoublePageView) {
+            singlePageViewBtn.classList.remove('active');
+            doublePageViewBtn.classList.add('active');
+        } else {
+            singlePageViewBtn.classList.add('active');
+            doublePageViewBtn.classList.remove('active');
+        }
+    }
+    
+    // 初始化视图模式按钮状态
+    updateViewModeButtons();
     
     // 添加键盘导航
     document.addEventListener('keydown', handleKeyboardNavigation);
