@@ -361,6 +361,7 @@ function initViewer() {
         // 重新添加单页canvas和文本层
         canvas = document.createElement('canvas');
         canvas.id = 'pdf-viewer';
+        canvas.classList.add('active'); // 添加active类使canvas可见
         textLayer = document.createElement('div');
         textLayer.id = 'text-layer';
         textLayer.className = 'text-layer';
@@ -1376,4 +1377,4 @@ function initViewer() {
     setTimeout(function() {
         showMessage('请选择一个PDF文件进行查看', 'info');
     }, 500);
-} 
+}
