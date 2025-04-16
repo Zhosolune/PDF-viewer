@@ -80,17 +80,49 @@ class UI {
      */
     updateUIForPdfLoaded(pageCount) {
         const pdfContainer = document.getElementById('pdf-container');
-        const pdfViewer = document.getElementById('pdf-viewer');
+        const canvasContainer = document.getElementById('canvas-container');
+        let pdfViewer = document.getElementById('pdf-viewer');
         const pageCountElement = document.getElementById('page-count');
         
-        // 添加has-pdf类
+        // 确保pdf-container存在
+        if (!pdfContainer) {
+            console.error('找不到PDF容器元素');
+            return;
+        }
+        
+        // 确保canvas-container存在
+        if (!canvasContainer) {
+            console.error('找不到Canvas容器元素');
+            return;
+        }
+        
+        // 添加has-pdf类到pdf-container
         pdfContainer.classList.add('has-pdf');
+        
+        // 检查pdfViewer是否存在，如果不存在则创建
+        if (!pdfViewer) {
+            console.log('找不到pdf-viewer元素，创建新的canvas元素');
+            pdfViewer = document.createElement('canvas');
+            pdfViewer.id = 'pdf-viewer';
+            pdfViewer.className = 'page-canvas';
+            
+            // 确保canvas容器为空并有正确的类名
+            canvasContainer.innerHTML = '';
+            canvasContainer.className = 'canvas-container';
+            
+            // 添加canvas到容器
+            canvasContainer.appendChild(pdfViewer);
+        }
         
         // 显示PDF查看器
         pdfViewer.classList.add('active');
         
         // 更新页码计数
-        pageCountElement.textContent = pageCount;
+        if (pageCountElement) {
+            pageCountElement.textContent = pageCount;
+        } else {
+            console.warn('找不到页码计数元素');
+        }
     }
 
     /**
@@ -100,11 +132,32 @@ class UI {
         const pdfContainer = document.getElementById('pdf-container');
         const pdfViewer = document.getElementById('pdf-viewer');
         
-        // 移除has-pdf类
-        pdfContainer.classList.remove('has-pdf');
+        // 确保pdf-container存在
+        if (pdfContainer) {
+            // 移除has-pdf类
+            pdfContainer.classList.remove('has-pdf');
+        } else {
+            console.warn('找不到PDF容器元素');
+        }
         
-        // 隐藏PDF查看器
-        pdfViewer.classList.remove('active');
+        // 隐藏PDF查看器（如果存在）
+        if (pdfViewer) {
+            pdfViewer.classList.remove('active');
+        } else {
+            console.warn('找不到pdf-viewer元素');
+        }
+        
+        // 重置页码输入框
+        const currentPageInput = document.getElementById('current-page');
+        if (currentPageInput) {
+            currentPageInput.value = 1;
+        }
+        
+        // 重置页数显示
+        const pageCountElement = document.getElementById('page-count');
+        if (pageCountElement) {
+            pageCountElement.textContent = '0';
+        }
     }
 
     /**

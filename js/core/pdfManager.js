@@ -159,12 +159,45 @@ class PDFManager {
             hiddenCanvas.parentNode.removeChild(hiddenCanvas);
         }
         
-        // 清空canvas容器
+        // 获取canvas容器
         const canvasContainer = document.getElementById('canvas-container');
         if (canvasContainer) {
+            // 保存现有canvas，如果存在的话
+            const existingCanvas = document.getElementById('pdf-viewer');
+            let savedCanvas = null;
+            
+            if (existingCanvas && canvasContainer.contains(existingCanvas)) {
+                console.log('保存现有canvas元素');
+                savedCanvas = existingCanvas;
+                canvasContainer.removeChild(existingCanvas);
+            }
+            
+            // 清空canvas容器
             console.log('清空canvas容器');
             canvasContainer.innerHTML = '';
             canvasContainer.className = 'canvas-container';
+            
+            // 如果之前存在canvas，重新添加
+            if (savedCanvas) {
+                console.log('重新添加保存的canvas元素');
+                canvasContainer.appendChild(savedCanvas);
+            } else {
+                // 创建新的canvas元素
+                console.log('创建新的canvas元素');
+                const newCanvas = document.createElement('canvas');
+                newCanvas.id = 'pdf-viewer';
+                newCanvas.className = 'page-canvas';
+                canvasContainer.appendChild(newCanvas);
+            }
+            
+            // 创建文本层
+            console.log('创建新的文本层');
+            const textLayer = document.createElement('div');
+            textLayer.id = 'text-layer';
+            textLayer.className = 'text-layer';
+            canvasContainer.appendChild(textLayer);
+        } else {
+            console.error('找不到canvas容器元素');
         }
     }
 
