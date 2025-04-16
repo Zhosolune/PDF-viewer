@@ -61,6 +61,9 @@ function initViewer() {
     let pdfFilename = document.getElementById('pdf-filename');
     let canvasContainer = document.getElementById('canvas-container');
     
+    // 设置初始缩放级别显示
+    zoomLevel.textContent = Math.round(scale * 100);
+    
     // 视图模式相关
     let isDoublePageView = false;
     let singlePageViewBtn = document.getElementById('single-page-view');
@@ -328,6 +331,14 @@ function initViewer() {
      * @param {boolean} isSearchNavigation 是否是搜索导航引起的渲染
      */
     function renderPage(num, isSearchNavigation = false) {
+        // 如果没有PDF文档，则不渲染
+        if (!pdfDoc) {
+            console.warn('尝试渲染页面，但未加载PDF文件');
+            // 确保加载动画被隐藏
+            spinner.style.display = 'none';
+            return;
+        }
+        
         pageRendering = true;
         spinner.style.display = 'block';
         
@@ -660,6 +671,12 @@ function initViewer() {
      * @param {boolean} isSearchNavigation 是否是搜索导航引起的渲染
      */
     function queueRenderPage(num, isSearchNavigation = false) {
+        // 确保已加载PDF文件
+        if (!pdfDoc) {
+            console.warn('尝试渲染页面，但未加载PDF文件');
+            return;
+        }
+        
         if (pageRendering) {
             pageNumPending = num;
             // 存储是否是搜索导航
@@ -848,6 +865,12 @@ function initViewer() {
      * 放大
      */
     function zoomIn() {
+        // 如果没有加载PDF文件，不执行缩放
+        if (!pdfDoc) {
+            showMessage('请先加载PDF文件', 'error');
+            return;
+        }
+        
         scale += 0.1;
         scale = Math.min(scale, 3.0); // 最大放大3倍
         const zoomPercent = Math.round(scale * 100);
@@ -866,6 +889,12 @@ function initViewer() {
      * 缩小
      */
     function zoomOut() {
+        // 如果没有加载PDF文件，不执行缩放
+        if (!pdfDoc) {
+            showMessage('请先加载PDF文件', 'error');
+            return;
+        }
+        
         scale -= 0.1;
         scale = Math.max(scale, 0.5); // 最小缩小0.5倍
         const zoomPercent = Math.round(scale * 100);
@@ -884,6 +913,12 @@ function initViewer() {
      * 重置缩放
      */
     function resetZoom() {
+        // 如果没有加载PDF文件，不执行缩放重置
+        if (!pdfDoc) {
+            showMessage('请先加载PDF文件', 'error');
+            return;
+        }
+        
         scale = defaultScale;
         const zoomPercent = Math.round(scale * 100);
         zoomLevel.textContent = zoomPercent;
@@ -993,8 +1028,10 @@ function initViewer() {
         
         // 重置UI
         document.querySelector('.pdf-container').classList.remove('has-pdf');
-        canvas.classList.remove('active');
         canvasContainer.classList.remove('double-view');
+        
+        // 隐藏加载动画
+        spinner.style.display = 'none';
         
         // 清除canvas容器内容
         while (canvasContainer.children.length > 0) {
@@ -1004,6 +1041,7 @@ function initViewer() {
         // 重新添加单页canvas和文本层
         canvas = document.createElement('canvas');
         canvas.id = 'pdf-viewer';
+        canvas.classList.add('active'); // 添加active类使canvas可见
         textLayer = document.createElement('div');
         textLayer.id = 'text-layer';
         textLayer.className = 'text-layer';
@@ -1012,6 +1050,10 @@ function initViewer() {
         canvasContainer.appendChild(textLayer);
         
         ctx = canvas.getContext('2d');
+        
+        // 确保新创建的canvas是空白的
+        canvas.width = 0;
+        canvas.height = 0;
         
         // 重置页码显示
         pageCount.textContent = '0';
@@ -1066,6 +1108,18 @@ function initViewer() {
     function handleKeyboardNavigation(event) {
         // 如果正在编辑页码输入框，不处理键盘导航
         if (document.activeElement === currentPageInput) {
+            return;
+        }
+        
+        // 对于需要已加载PDF的操作，先检查PDF是否已加载
+        const requiresPdf = ['ArrowLeft', 'Left', 'ArrowRight', 'Right', 'Home', 'End', '0', '1', '2'];
+        if (requiresPdf.includes(event.key) && !pdfDoc && event.key !== '0') {
+            if (event.ctrlKey) {
+                // 对于组合键，我们不显示提示，避免干扰正常使用
+                return;
+            }
+            // 显示提示信息
+            showMessage('请先加载PDF文件', 'error');
             return;
         }
         
@@ -1287,6 +1341,11 @@ function initViewer() {
     
     // 添加视图模式切换功能
     singlePageViewBtn.addEventListener('click', function() {
+        if (!pdfDoc) {
+            showMessage('请先加载PDF文件', 'error');
+            return;
+        }
+        
         if (isDoublePageView) {
             isDoublePageView = false;
             updateViewModeButtons();
@@ -1299,6 +1358,11 @@ function initViewer() {
     });
     
     doublePageViewBtn.addEventListener('click', function() {
+        if (!pdfDoc) {
+            showMessage('请先加载PDF文件', 'error');
+            return;
+        }
+        
         if (!isDoublePageView) {
             isDoublePageView = true;
             updateViewModeButtons();
