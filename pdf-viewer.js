@@ -48,12 +48,14 @@ function initViewer() {
     let pageRendering = false;
     let pageNumPending = null;
     let scale = 1.0;
+    let defaultScale = 1.0; // 添加默认缩放比例变量
     let canvas = document.getElementById('pdf-viewer');
     let ctx = canvas.getContext('2d');
     let spinner = document.getElementById('spinner');
     let currentPageInput = document.getElementById('current-page');
     let pageCount = document.getElementById('page-count');
     let zoomLevel = document.getElementById('zoom-level');
+    let zoomReset = document.getElementById('zoom-reset');
     let dropZone = document.getElementById('drop-zone');
     let textLayer = document.getElementById('text-layer');
     let pdfFilename = document.getElementById('pdf-filename');
@@ -848,7 +850,11 @@ function initViewer() {
     function zoomIn() {
         scale += 0.1;
         scale = Math.min(scale, 3.0); // 最大放大3倍
-        zoomLevel.textContent = Math.round(scale * 100);
+        const zoomPercent = Math.round(scale * 100);
+        zoomLevel.textContent = zoomPercent;
+        
+        // 显示缩放提示
+        showMessage(`缩放级别: ${zoomPercent}%`, 'info');
         
         // 缩放改变时清除页面缓存
         pageTextContent = {};
@@ -862,7 +868,28 @@ function initViewer() {
     function zoomOut() {
         scale -= 0.1;
         scale = Math.max(scale, 0.5); // 最小缩小0.5倍
-        zoomLevel.textContent = Math.round(scale * 100);
+        const zoomPercent = Math.round(scale * 100);
+        zoomLevel.textContent = zoomPercent;
+        
+        // 显示缩放提示
+        showMessage(`缩放级别: ${zoomPercent}%`, 'info');
+        
+        // 缩放改变时清除页面缓存
+        pageTextContent = {};
+        
+        queueRenderPage(pageNum);
+    }
+
+    /**
+     * 重置缩放
+     */
+    function resetZoom() {
+        scale = defaultScale;
+        const zoomPercent = Math.round(scale * 100);
+        zoomLevel.textContent = zoomPercent;
+        
+        // 显示缩放重置提示
+        showMessage(`缩放已重置为 ${zoomPercent}%`, 'info');
         
         // 缩放改变时清除页面缓存
         pageTextContent = {};
@@ -925,7 +952,7 @@ function initViewer() {
                     pageNum = 1;
                     
                     // 重置缩放
-                    scale = 1.0;
+                    scale = defaultScale;
                     zoomLevel.textContent = Math.round(scale * 100);
                     
                     // 默认使用单页视图
@@ -1061,6 +1088,13 @@ function initViewer() {
             case '-':
                 zoomOut();
                 event.preventDefault();
+                break;
+            case '0':
+                if (event.ctrlKey) {
+                    // Ctrl+0: 重置缩放
+                    resetZoom();
+                    event.preventDefault();
+                }
                 break;
             case 'Home':
                 if (pdfDoc) {
@@ -1247,6 +1281,7 @@ function initViewer() {
     document.getElementById('next-page').addEventListener('click', onNextPage);
     document.getElementById('zoom-in').addEventListener('click', zoomIn);
     document.getElementById('zoom-out').addEventListener('click', zoomOut);
+    document.getElementById('zoom-reset').addEventListener('click', resetZoom);
     document.getElementById('file-input').addEventListener('change', onFileSelected);
     currentPageInput.addEventListener('change', onPageNumberChanged);
     
