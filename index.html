@@ -742,6 +742,20 @@
         .drop-zone.drag-over {
             animation: gentle-pulsate 2s infinite ease-in-out;
         }
+
+        #zoom-reset {
+            user-select: none;
+            transition: all 0.3s;
+        }
+        
+        #zoom-reset:hover {
+            color: var(--primary-color);
+            transform: scale(1.05);
+        }
+        
+        #zoom-reset:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -777,7 +791,7 @@
                 <button class="btn" id="zoom-out" title="缩小 (-键)">
                     <span class="anticon"><svg viewBox="64 64 896 896" focusable="false" data-icon="minus" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z"></path></svg></span>
                 </button>
-                <span class="page-info"><span id="zoom-level">100</span>%</span>
+                <span class="page-info" id="zoom-reset" title="重置缩放 (Ctrl+0)" style="cursor: pointer;"><span id="zoom-level">100</span>%</span>
                 <button class="btn" id="zoom-in" title="放大 (+键)">
                     <span class="anticon"><svg viewBox="64 64 896 896" focusable="false" data-icon="plus" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z"></path><path d="M176 474h672q8 0 8 8v60q0 8-8 8H176q-8 0-8-8v-60q0-8 8-8z"></path></svg></span>
                 </button>
