@@ -5,6 +5,7 @@
 import gEventBus from '../utils/eventBus.js';
 import gAppState from '../utils/appState.js';
 import gUI from '../utils/ui.js';
+import gPageRenderer from './pageRenderer.js';  // 导入页面渲染器
 
 class PDFManager {
     /**
@@ -53,21 +54,29 @@ class PDFManager {
         
         try {
             gUI.showSpinner();
+            console.log(`开始加载PDF文件: ${filename}`);
+            
+            // 重置渲染状态和缓存
+            this._resetState();
             
             // 清除现有的PDF文档
             if (this._pdfDoc) {
+                console.log('清除现有PDF文档');
                 await this._pdfDoc.destroy();
                 this._pdfDoc = null;
             }
             
             // 加载PDF文档
+            console.log('初始化PDF加载任务');
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             
             // 更新UI显示文件名
             gUI.updatePdfFilename(filename);
             
             // 等待加载完成
+            console.log('等待PDF文档加载完成');
             this._pdfDoc = await loadingTask.promise;
+            console.log(`PDF文档加载完成，共${this._pdfDoc.numPages}页`);
             
             // 更新应用状态
             gAppState.setState({
@@ -81,6 +90,17 @@ class PDFManager {
             
             // 更新UI
             gUI.updateUIForPdfLoaded(this._pdfDoc.numPages);
+            
+            // 直接调用渲染方法显示第一页
+            try {
+                console.log('开始渲染PDF首页');
+                await gPageRenderer.renderPage(1);
+                console.log('PDF首页渲染完成');
+            } catch (renderError) {
+                console.error('渲染PDF首页错误:', renderError);
+                // 即使渲染失败也继续，不影响PDF加载结果
+            }
+            
             gUI.hideSpinner();
             
             // 发布PDF加载完成事件
@@ -104,6 +124,47 @@ class PDFManager {
                 success: false,
                 error: error.message
             };
+        }
+    }
+
+    /**
+     * 重置状态和清除缓存
+     * @private
+     */
+    _resetState() {
+        console.log('重置PDF管理器状态和缓存');
+        
+        // 重置应用状态
+        gAppState.resetState();
+        
+        // 清除文本层
+        gPageRenderer.clearTextLayer();
+        
+        // 清除页面文本内容缓存
+        gPageRenderer.clearPageTextContent();
+        
+        // 清除DOM中可能存在的残留元素
+        this._cleanupDOM();
+    }
+    
+    /**
+     * 清理DOM中的残留元素
+     * @private
+     */
+    _cleanupDOM() {
+        // 清理隐藏的canvas元素
+        const hiddenCanvas = document.querySelector('#pdf-viewer[style*="display: none"]');
+        if (hiddenCanvas && hiddenCanvas.parentNode) {
+            console.log('移除隐藏的canvas元素');
+            hiddenCanvas.parentNode.removeChild(hiddenCanvas);
+        }
+        
+        // 清空canvas容器
+        const canvasContainer = document.getElementById('canvas-container');
+        if (canvasContainer) {
+            console.log('清空canvas容器');
+            canvasContainer.innerHTML = '';
+            canvasContainer.className = 'canvas-container';
         }
     }
 
