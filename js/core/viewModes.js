@@ -44,6 +44,9 @@ class ViewModes {
             return;
         }
         
+        // 在切换视图前清除所有文本层
+        gPageRenderer.clearTextLayer();
+        
         // 更新应用状态
         gAppState.setState({ isDoublePageView: false });
         
@@ -65,6 +68,9 @@ class ViewModes {
         if (gAppState.getIsDoublePageView()) {
             return;
         }
+        
+        // 在切换视图前清除所有文本层
+        gPageRenderer.clearTextLayer();
         
         // 确保当前页码是奇数（始终从左侧页面开始）
         let currentPage = gAppState.getPageNum();
