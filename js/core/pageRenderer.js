@@ -28,18 +28,35 @@ class PageRenderer {
         if (!pdfDoc) return false;
         
         try {
-            // 获取Canvas和Context
-            const canvas = document.getElementById('pdf-viewer');
-            const ctx = canvas.getContext('2d');
-            
-            // 清除canvas-container内的内容
+            // 清除canvas-container内的内容，但保留canvas元素
             const canvasContainer = document.getElementById('canvas-container');
+            let canvas = document.getElementById('pdf-viewer');
+            
+            // 检查canvas是否存在，如果不在容器内，可能是之前被双页视图隐藏了
+            if (!canvasContainer.contains(canvas)) {
+                // 尝试找到被隐藏的canvas
+                const hiddenCanvas = document.querySelector('#pdf-viewer[style*="display: none"]');
+                if (hiddenCanvas) {
+                    canvas = hiddenCanvas;
+                    hiddenCanvas.style.display = ''; // 移除隐藏样式
+                } else {
+                    // 如果找不到，创建新的canvas
+                    canvas = document.createElement('canvas');
+                    canvas.id = 'pdf-viewer';
+                }
+            } else {
+                // 保存原始canvas元素
+                canvasContainer.removeChild(canvas);
+            }
+            
+            // 清空容器并重置类名
             canvasContainer.innerHTML = '';
             canvasContainer.className = 'canvas-container';
             
-            // 添加canvas和text-layer到container
+            // 添加canvas回容器
             canvasContainer.appendChild(canvas);
             
+            // 创建文本层
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'text-layer';
             textLayerDiv.id = 'text-layer';
@@ -59,6 +76,7 @@ class PageRenderer {
             canvas.classList.add('active');
             
             // 渲染PDF页面到Canvas
+            const ctx = canvas.getContext('2d');
             const renderContext = {
                 canvasContext: ctx,
                 viewport: viewport
@@ -70,8 +88,11 @@ class PageRenderer {
             // 等待渲染完成
             await renderTask.promise;
             
-            // 渲染文本层
-            await this._renderTextLayer(page, viewport, textLayerDiv);
+            // 仅在有搜索查询时处理文本层内容，避免文字重叠问题
+            if (gAppState.getSearchQuery()) {
+                // 渲染文本层
+                await this._renderTextLayer(page, viewport, textLayerDiv);
+            }
             
             // 如果是搜索导航，在渲染后突出显示当前匹配项
             if (isSearchNavigation) {
@@ -99,6 +120,26 @@ class PageRenderer {
         try {
             // 清除canvas-container内的内容
             const canvasContainer = document.getElementById('canvas-container');
+            
+            // 查找原始canvas元素，可能在容器内，也可能在body中被隐藏
+            let originalCanvas = document.getElementById('pdf-viewer');
+            if (canvasContainer.contains(originalCanvas)) {
+                canvasContainer.removeChild(originalCanvas);
+            } else {
+                // 如果不在容器中，尝试从body中查找
+                originalCanvas = document.querySelector('#pdf-viewer');
+                if (originalCanvas && originalCanvas.parentNode) {
+                    originalCanvas.parentNode.removeChild(originalCanvas);
+                }
+                
+                // 如果找不到或无法获取，创建新的canvas
+                if (!originalCanvas) {
+                    originalCanvas = document.createElement('canvas');
+                    originalCanvas.id = 'pdf-viewer';
+                }
+            }
+            
+            // 清空容器
             canvasContainer.innerHTML = '';
             canvasContainer.className = 'canvas-container double-view';
             
@@ -144,6 +185,10 @@ class PageRenderer {
                 // 渲染右侧页面
                 await this._renderPageToCanvas(pageNum + 1, rightCanvas, rightTextLayer);
             }
+            
+            // 保存原始canvas以备后用（隐藏起来）
+            originalCanvas.style.display = 'none';
+            document.body.appendChild(originalCanvas);
             
             // 如果是搜索导航，在渲染后突出显示当前匹配项
             if (isSearchNavigation) {
@@ -227,31 +272,36 @@ class PageRenderer {
                 viewport: viewport
             };
             
-            // 创建文本层项
-            const textLayerFrag = document.createDocumentFragment();
-            
-            textContent.items.forEach(item => {
-                const tx = pdfjsLib.Util.transform(
-                    viewport.transform,
-                    item.transform
-                );
+            // 仅在搜索时使用文本层，否则不显示文本（避免文字重叠问题）
+            if (gAppState.getSearchQuery()) {
+                // 创建文本层项
+                const textLayerFrag = document.createDocumentFragment();
                 
-                const style = `
-                    left: ${tx[4]}px;
-                    top: ${tx[5]}px;
-                    font-size: ${tx[0]}px;
-                    transform: scaleX(${tx[0] / tx[3]});
-                `;
+                textContent.items.forEach(item => {
+                    const tx = pdfjsLib.Util.transform(
+                        viewport.transform,
+                        item.transform
+                    );
+                    
+                    const style = `
+                        left: ${tx[4]}px;
+                        top: ${tx[5]}px;
+                        font-size: ${tx[0]}px;
+                        transform: scaleX(${tx[0] / tx[3]});
+                        opacity: 0;  /* 设置文本透明，只用于搜索匹配 */
+                    `;
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = item.str;
+                    textSpan.style.cssText = style;
+                    textSpan.dataset.pageNum = pageNum;  // 添加页码数据属性，便于搜索匹配
+                    
+                    textLayerFrag.appendChild(textSpan);
+                });
                 
-                const textSpan = document.createElement('span');
-                textSpan.textContent = item.str;
-                textSpan.style.cssText = style;
-                
-                textLayerFrag.appendChild(textSpan);
-            });
-            
-            // 添加文本层项到文本层
-            textLayerDiv.appendChild(textLayerFrag);
+                // 添加文本层项到文本层
+                textLayerDiv.appendChild(textLayerFrag);
+            }
         } catch (error) {
             console.error('渲染文本层错误:', error);
         }
@@ -357,19 +407,26 @@ class PageRenderer {
      * 清除文本层
      */
     clearTextLayer() {
-        if (gAppState.getIsDoublePageView()) {
-            // 双页视图模式下清除所有文本层
-            const textLayers = document.querySelectorAll('.page-text-layer');
-            textLayers.forEach(layer => {
-                layer.innerHTML = '';
-            });
-        } else {
-            // 单页视图模式
-            const textLayer = document.getElementById('text-layer');
-            if (textLayer) {
-                textLayer.innerHTML = '';
-            }
+        // 清除所有可能的文本层
+        // 首先检查双页视图的文本层
+        const doubleViewTextLayers = document.querySelectorAll('.page-text-layer');
+        doubleViewTextLayers.forEach(layer => {
+            layer.innerHTML = '';
+        });
+        
+        // 然后检查单页视图的文本层
+        const singleViewTextLayer = document.getElementById('text-layer');
+        if (singleViewTextLayer) {
+            singleViewTextLayer.innerHTML = '';
         }
+        
+        // 最后，查找并清除任何其他可能存在的文本层
+        const allTextLayers = document.querySelectorAll('[class*="text-layer"]');
+        allTextLayers.forEach(layer => {
+            if (layer !== singleViewTextLayer && !Array.from(doubleViewTextLayers).includes(layer)) {
+                layer.innerHTML = '';
+            }
+        });
     }
 
     /**
