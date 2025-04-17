@@ -13,6 +13,7 @@ import gNavigation from './features/navigation.js';
 import gZoom from './features/zoom.js';
 import gSearch from './features/search.js';
 import gFileLoader from './features/fileLoader.js';
+import gResponsiveLayout from './features/responsiveLayout.js';
 
 /**
  * 初始化应用程序
@@ -61,5 +62,8 @@ window.PDFViewer = {
     },
     search: (query) => {
         gSearch.searchText(query);
+    },
+    adjustLayout: () => {
+        gResponsiveLayout._adjustLayout();
     }
 }; 
