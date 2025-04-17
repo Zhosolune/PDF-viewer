@@ -276,6 +276,15 @@ class PageRenderer {
         // 获取当前设置的缩放比例
         const currentScale = gAppState.getScale();
         
+        // 获取用户是否手动设置了缩放
+        const defaultScale = gAppState.getDefaultScale();
+        const hasUserSetScale = Math.abs(currentScale - defaultScale) > 0.01;
+        
+        // 如果用户手动设置了缩放，直接返回用户设置的缩放比例
+        if (hasUserSetScale) {
+            return currentScale;
+        }
+        
         // 获取PDF容器尺寸
         const pdfContainer = document.getElementById('pdf-container');
         if (!pdfContainer) return currentScale;
@@ -283,50 +292,40 @@ class PageRenderer {
         // 考虑容器内边距
         const containerPadding = 40; // 左右各20px内边距
         const availableWidth = pdfContainer.clientWidth - containerPadding;
-        const availableHeight = pdfContainer.clientHeight - containerPadding;
         
         // 获取页面原始视口
         const originalViewport = page.getViewport({ scale: 1.0 });
         
-        // 计算水平和垂直方向上的缩放比例
-        const horizontalScale = availableWidth / originalViewport.width;
-        const verticalScale = availableHeight / originalViewport.height;
-        
-        // 根据视图模式选择合适的缩放比例
-        // 在双页视图中，宽度需要除以2（考虑两个页面并排显示）
+        // 计算水平方向上的缩放比例
+        // 在双页视图中，宽度需要考虑两个页面并排显示
         const isDoublePageView = gAppState.getIsDoublePageView();
-        const effectiveHorizontalScale = isDoublePageView ? 
-                                        horizontalScale / 1.5 : // 考虑两页之间的间隙，使用1.5作为因子
-                                        horizontalScale;
+        let horizontalScale = availableWidth / originalViewport.width;
         
-        // 选择较小的缩放比例以确保完整显示
-        let bestScale = Math.min(effectiveHorizontalScale, verticalScale);
+        if (isDoublePageView) {
+            // 双页视图时考虑间隙
+            horizontalScale = horizontalScale / 1.5; // 使用1.5作为因子考虑两页之间的间隙
+        }
         
         // 设置最小和最大缩放限制
         const minScale = 0.5;  // 最小缩放为50%
         const maxScale = 2.0;  // 最大缩放为200%
         
-        // 确保缩放比例在合理范围内
-        bestScale = Math.max(minScale, Math.min(bestScale, maxScale));
+        // 确保缩放比例在合理范围内，但只限制最小值
+        // 不限制最大值，允许用户根据需要放大
+        let bestScale = Math.max(minScale, horizontalScale);
         
-        // 如果用户手动调整过缩放（即当前缩放不是默认值），则优先使用用户设置的缩放
-        const defaultScale = gAppState.getDefaultScale();
-        const hasUserSetScale = Math.abs(currentScale - defaultScale) > 0.01;
+        // 如果超出最大值，也不限制
+        // bestScale = Math.min(bestScale, maxScale);
         
         console.log(`计算最佳缩放比例: 
             - 当前缩放: ${currentScale}
             - 可用宽度: ${availableWidth}px
-            - 可用高度: ${availableHeight}px
             - 页面原始宽度: ${originalViewport.width}px
-            - 页面原始高度: ${originalViewport.height}px
             - 水平缩放: ${horizontalScale.toFixed(2)}
-            - 垂直缩放: ${verticalScale.toFixed(2)}
-            - 有效水平缩放: ${effectiveHorizontalScale.toFixed(2)}
             - 最佳缩放: ${bestScale.toFixed(2)}
             - 用户是否设置缩放: ${hasUserSetScale}`);
         
-        // 如果用户手动设置了缩放，优先使用用户的设置
-        return hasUserSetScale ? currentScale : bestScale;
+        return bestScale;
     }
 
     /**
