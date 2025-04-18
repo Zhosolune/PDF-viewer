@@ -267,6 +267,68 @@ class PageRenderer {
     }
 
     /**
+     * 计算最佳缩放比例，使PDF内容适应窗口大小
+     * @param {Object} page - PDF页面对象
+     * @returns {number} - 计算得到的最佳缩放比例
+     * @private
+     */
+    _calculateBestScale(page) {
+        // 获取当前设置的缩放比例
+        const currentScale = gAppState.getScale();
+        
+        // 获取用户是否手动设置了缩放
+        const defaultScale = gAppState.getDefaultScale();
+        const hasUserSetScale = Math.abs(currentScale - defaultScale) > 0.01;
+        
+        // 如果用户手动设置了缩放，直接返回用户设置的缩放比例
+        if (hasUserSetScale) {
+            return currentScale;
+        }
+        
+        // 获取PDF容器尺寸
+        const pdfContainer = document.getElementById('pdf-container');
+        if (!pdfContainer) return currentScale;
+        
+        // 考虑容器内边距
+        const containerPadding = 40; // 左右各20px内边距
+        const availableWidth = pdfContainer.clientWidth - containerPadding;
+        
+        // 获取页面原始视口
+        const originalViewport = page.getViewport({ scale: 1.0 });
+        
+        // 计算水平方向上的缩放比例
+        // 在双页视图中，宽度需要考虑两个页面并排显示
+        const isDoublePageView = gAppState.getIsDoublePageView();
+        let horizontalScale = availableWidth / originalViewport.width;
+        
+        if (isDoublePageView) {
+            // 双页视图时考虑间隙
+            horizontalScale = horizontalScale / 1.5; // 使用1.5作为因子考虑两页之间的间隙
+        }
+        
+        // 设置最小和最大缩放限制
+        const minScale = 0.5;  // 最小缩放为50%
+        const maxScale = 2.0;  // 最大缩放为200%
+        
+        // 确保缩放比例在合理范围内，但只限制最小值
+        // 不限制最大值，允许用户根据需要放大
+        let bestScale = Math.max(minScale, horizontalScale);
+        
+        // 如果超出最大值，也不限制
+        // bestScale = Math.min(bestScale, maxScale);
+        
+        console.log(`计算最佳缩放比例: 
+            - 当前缩放: ${currentScale}
+            - 可用宽度: ${availableWidth}px
+            - 页面原始宽度: ${originalViewport.width}px
+            - 水平缩放: ${horizontalScale.toFixed(2)}
+            - 最佳缩放: ${bestScale.toFixed(2)}
+            - 用户是否设置缩放: ${hasUserSetScale}`);
+        
+        return bestScale;
+    }
+
+    /**
      * 将页面渲染到指定的Canvas和文本层
      * @private
      * @param {number} pageNum - 页码
@@ -300,9 +362,18 @@ class PageRenderer {
             // 获取页面
             const page = await pdfDoc.getPage(pageNum);
             
-            // 计算缩放后的视口
-            const scale = gAppState.getScale();
-            const viewport = page.getViewport({ scale });
+            // 计算最佳缩放比例
+            const bestScale = this._calculateBestScale(page);
+            
+            // 如果计算得到的最佳缩放比例与当前不同，则更新应用状态
+            const currentScale = gAppState.getScale();
+            if (Math.abs(bestScale - currentScale) > 0.01) {
+                gAppState.setState({ scale: bestScale });
+                gUI.updateZoomDisplay(bestScale);
+            }
+            
+            // 使用计算后的缩放创建视口
+            const viewport = page.getViewport({ scale: bestScale });
             
             // 设置canvas尺寸
             canvas.height = viewport.height;

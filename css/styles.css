@@ -5,6 +5,7 @@
     --error-color: #f5222d;
     --font-size-base: 14px;
     --border-radius-base: 2px;
+    --controls-height: 64px;
 }
 
 body {
@@ -19,7 +20,7 @@ h1 {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     padding: 24px;
 }
@@ -62,6 +63,29 @@ h1 {
     padding: 16px;
     border-radius: 2px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: top 0.3s, box-shadow 0.3s;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* 确保按钮组之间有适当间距 */
+.zoom-control, .view-mode-control, .search-bar {
+    margin: 0 5px;
+}
+
+/* 增加控制栏在固定状态下的样式 */
+.controls.sticky {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.controls.hidden {
+    top: -100px;
 }
 
 .btn {
@@ -79,6 +103,9 @@ h1 {
     height: 32px;
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .btn:hover {
@@ -179,7 +206,9 @@ h1 {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     border-radius: 2px;
     overflow: auto;
-    height: calc(100vh - 200px);
+    min-height: calc(100vh - 150px);
+    height: auto;
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -279,6 +308,7 @@ h1 {
     min-height: 400px;
     background-color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-width: none;
 }
 
 /* 多页视图相关样式 */
@@ -422,9 +452,10 @@ h1 {
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .container {
         padding: 16px;
+        max-width: 100%;
     }
     
     .header {
@@ -434,77 +465,80 @@ h1 {
     }
     
     .controls {
-        flex-wrap: wrap;
+        gap: 12px; /* 减小按钮之间的间距 */
     }
     
     .search-bar {
-        flex-basis: 100%;
         margin-top: 10px;
         justify-content: flex-start;
+        flex: 0 0 auto; /* 防止搜索栏拉伸或压缩 */
+    }
+}
+
+@media (max-width: 780px) {
+    .controls {
+        gap: 8px; /* 进一步减小间距 */
+        padding: 12px; /* 减小内边距 */
     }
     
-    .pdf-container {
-        padding: 10px;
-        align-items: flex-start;
-    }
-    
-    .top-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .pdf-filename {
-        margin: 8px 0;
-        text-align: center;
-    }
-    
-    .page-controls, .zoom-controls {
-        flex-wrap: wrap;
+    .search-bar {
+        flex-basis: 100%; /* 让搜索栏占据整行 */
         justify-content: center;
     }
     
-    .page-input {
-        width: 40px;
+    /* 保留搜索框的宽度适当值 */
+    .search-bar input {
+        width: 120px;
     }
     
-    .file-info {
-        flex-direction: column;
-        align-items: flex-start;
+    .zoom-control, .view-mode-control {
+        margin: 0 4px; /* 减小边距 */
     }
     
-    .pdf-filename {
-        margin: 10px 0;
-        padding: 0;
-        width: 100%;
+    .page-info {
+        margin: 0 8px; /* 适当调整页码信息的边距 */
     }
 }
 
 @media (max-width: 480px) {
     .input-number {
-        width: 50px;
+        width: 40px;
     }
     
     .page-info {
-        margin: 0 8px;
+        margin: 0 5px;
     }
     
     .btn {
-        padding: 4px 10px;
+        padding: 4px 6px;
+        font-size: 12px;
+        min-width: 28px !important; /* 覆盖之前设定的最小宽度 */
     }
     
     .controls {
-        flex-direction: column;
-        gap: 10px;
+        padding: 10px 5px;
+        gap: 5px;
+    }
+    
+    .search-bar {
+        margin-top: 5px;
+        display: flex;
+        justify-content: center;
     }
     
     .search-bar input {
-        width: 140px;
+        width: 80px;
     }
     
-    .btn {
-        padding: 4px 8px;
-        font-size: 12px;
+    .search-bar .btn {
+        padding: 4px 5px;
+        min-width: 24px !important;
+    }
+    
+    /* 在超小屏幕时减小控件间距 */
+    .zoom-control, .view-mode-control {
+        gap: 2px;
+        margin: 0 2px;
     }
 }
 
@@ -553,6 +587,8 @@ h1 {
 .pdf-container.has-pdf {
     padding: 20px;
     background-color: #f5f5f5;
+    height: auto;
+    min-height: calc(100vh - 150px);
 }
 
 /* 更新文本匹配高亮样式 */
@@ -746,4 +782,154 @@ h1 {
 
 #zoom-reset:active {
     transform: scale(0.95);
+}
+
+/* 按钮文字类 */
+.btn-text {
+    display: inline-block;
+}
+
+/* 设置按钮的最小宽度，确保图标可见 */
+#prev-page, #next-page {
+    min-width: 32px; /* 减小最小宽度，避免溢出 */
+}
+
+#zoom-in, #zoom-out {
+    min-width: 32px;
+}
+
+#single-page-view, #double-page-view {
+    min-width: 32px; /* 减小最小宽度，避免溢出 */
+}
+
+/* 搜索栏按钮样式 */
+.search-bar .btn {
+    min-width: 32px;
+    padding: 4px 8px;
+}
+
+/* 控制栏响应式模式 - 完整模式 */
+.controls-mode-full {
+    flex-wrap: wrap;
+}
+
+.controls-mode-full .btn-text {
+    display: inline-block;
+}
+
+/* 控制栏响应式模式 - 仅图标模式 */
+.controls-mode-icons {
+    flex-wrap: wrap;
+}
+
+.controls-mode-icons .btn-text {
+    display: none;
+}
+
+.controls-mode-icons .btn {
+    padding: 4px 8px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+}
+
+/* 控制栏响应式模式 - 紧凑模式（文字但不换行） */
+.controls-mode-compact {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 8px; /* 为滚动条留出空间 */
+}
+
+.controls-mode-compact .btn-text {
+    display: inline-block;
+}
+
+.controls-mode-compact .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* 控制栏响应式模式 - 紧凑图标模式 */
+.controls-mode-compact-icons {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 8px; /* 为滚动条留出空间 */
+}
+
+.controls-mode-compact-icons .btn-text {
+    display: none;
+}
+
+.controls-mode-compact-icons .btn {
+    padding: 4px 8px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* 控制栏响应式模式 - 迷你模式 */
+.controls-mode-mini {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 8px; /* 为滚动条留出空间 */
+}
+
+.controls-mode-mini .btn-text {
+    display: none;
+}
+
+.controls-mode-mini .btn {
+    padding: 2px 4px;
+    width: 24px;
+    height: 24px;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.controls-mode-mini .anticon {
+    font-size: 12px;
+}
+
+.controls-mode-mini .input-number {
+    width: 50px;
+    height: 24px;
+    padding: 2px 5px;
+    font-size: 12px;
+}
+
+.controls-mode-mini .page-info {
+    margin: 0 8px;
+    font-size: 12px;
+}
+
+/* 隐藏水平滚动条但保留功能 */
+.controls-mode-compact::-webkit-scrollbar,
+.controls-mode-compact-icons::-webkit-scrollbar,
+.controls-mode-mini::-webkit-scrollbar {
+    height: 4px;
+}
+
+.controls-mode-compact::-webkit-scrollbar-track,
+.controls-mode-compact-icons::-webkit-scrollbar-track,
+.controls-mode-mini::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 2px;
+}
+
+.controls-mode-compact::-webkit-scrollbar-thumb,
+.controls-mode-compact-icons::-webkit-scrollbar-thumb,
+.controls-mode-mini::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border-radius: 2px;
+}
+
+.controls-mode-compact::-webkit-scrollbar-thumb:hover,
+.controls-mode-compact-icons::-webkit-scrollbar-thumb:hover,
+.controls-mode-mini::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
 } 

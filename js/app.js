@@ -13,6 +13,9 @@ import gNavigation from './features/navigation.js';
 import gZoom from './features/zoom.js';
 import gSearch from './features/search.js';
 import gFileLoader from './features/fileLoader.js';
+import gResponsiveLayout from './features/responsiveLayout.js';
+import gStickyControls from './features/stickyControls.js';
+import gControlsResponsive from './features/controlsResponsive.js';
 
 /**
  * 初始化应用程序
@@ -30,6 +33,12 @@ function initApp() {
         
         // 初始化键盘事件处理
         gEventHandlers.init();
+        
+        // 初始化控制栏吸顶效果
+        gStickyControls.init();
+        
+        // 初始化控制栏响应式设计
+        gControlsResponsive.init();
         
         // 显示欢迎消息
         gUI.showMessage('PDF查看器已准备就绪', 'success');
@@ -61,5 +70,8 @@ window.PDFViewer = {
     },
     search: (query) => {
         gSearch.searchText(query);
+    },
+    adjustLayout: () => {
+        gResponsiveLayout._adjustLayout();
     }
 }; 
