@@ -40,10 +40,12 @@
             <div class="zoom-control">
                 <button class="btn" id="zoom-out" title="缩小 (-键)">
                     <span class="anticon"><svg viewBox="64 64 896 896" focusable="false" data-icon="minus" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z"></path></svg></span>
+                    <span class="btn-text">缩小</span>
                 </button>
                 <span class="page-info" id="zoom-reset" title="重置缩放 (Ctrl+0)" style="cursor: pointer;"><span id="zoom-level">100</span>%</span>
                 <button class="btn" id="zoom-in" title="放大 (+键)">
                     <span class="anticon"><svg viewBox="64 64 896 896" focusable="false" data-icon="plus" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z"></path><path d="M176 474h672q8 0 8 8v60q0 8-8 8H176q-8 0-8-8v-60q0-8 8-8z"></path></svg></span>
+                    <span class="btn-text">放大</span>
                 </button>
             </div>
             <div class="view-mode-control">
@@ -56,9 +58,15 @@
             </div>
             <div class="search-bar">
                 <input type="text" id="search-input" placeholder="搜索文本" title="按Ctrl+F聚焦 (最少2个字符)" />
-                <button id="search-prev" class="btn" title="上一个匹配 (Shift+F3)"><i class="fas fa-chevron-up"></i></button>
-                <button id="search-next" class="btn" title="下一个匹配 (F3)"><i class="fas fa-chevron-down"></i></button>
-                <button id="search-clear" class="btn" title="清除搜索"><i class="fas fa-times"></i></button>
+                <button id="search-prev" class="btn" title="上一个匹配 (Shift+F3)">
+                    <i class="fas fa-chevron-up"></i><span class="btn-text">上一个</span>
+                </button>
+                <button id="search-next" class="btn" title="下一个匹配 (F3)">
+                    <i class="fas fa-chevron-down"></i><span class="btn-text">下一个</span>
+                </button>
+                <button id="search-clear" class="btn" title="清除搜索">
+                    <i class="fas fa-times"></i><span class="btn-text">清除</span>
+                </button>
                 <span id="search-results" class="search-results"></span>
             </div>
         </div>

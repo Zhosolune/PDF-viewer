@@ -70,6 +70,7 @@ h1 {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    justify-content: center;
 }
 
 /* 增加控制栏在固定状态下的样式 */
@@ -457,7 +458,7 @@ h1 {
     .controls {
         flex-wrap: wrap;
         gap: 12px;
-        justify-content: space-between;
+        justify-content: center;
     }
     
     .search-bar {
@@ -468,8 +469,13 @@ h1 {
 }
 
 @media (max-width: 780px) {
-    .btn-text {
+    .btn .btn-text {
         display: none !important;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
     }
     
     .btn {
@@ -760,7 +766,7 @@ h1 {
     transform: scale(0.95);
 }
 
-/* 按钮文字类 - 保持显示，通过媒体查询隐藏 */
+/* 按钮文字类 */
 .btn-text {
-    display: inline;
+    display: inline-block !important;
 } 
