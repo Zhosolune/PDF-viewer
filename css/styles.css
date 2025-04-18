@@ -67,10 +67,9 @@ h1 {
     top: 0;
     z-index: 100;
     transition: top 0.3s, box-shadow 0.3s;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    box-sizing: border-box;
 }
 
 /* 增加控制栏在固定状态下的样式 */
@@ -443,7 +442,7 @@ h1 {
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .container {
         padding: 16px;
         max-width: 100%;
@@ -458,57 +457,19 @@ h1 {
     .controls {
         flex-wrap: wrap;
         gap: 12px;
-        justify-content: center;
+        justify-content: space-between;
     }
     
     .search-bar {
-        flex-basis: 100%;
         margin-top: 10px;
         justify-content: flex-start;
-    }
-    
-    .pdf-container {
-        padding: 10px;
-        align-items: flex-start;
-        min-height: calc(100vh - 120px);
-        height: auto;
-    }
-    
-    .top-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    
-    .pdf-filename {
-        margin: 8px 0;
-        text-align: center;
-    }
-    
-    .page-controls, .zoom-controls {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .page-input {
-        width: 40px;
-    }
-    
-    .file-info {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .pdf-filename {
-        margin: 10px 0;
-        padding: 0;
-        width: 100%;
+        flex: 0 0 auto;
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 780px) {
     .btn-text {
-        display: none;
+        display: none !important;
     }
     
     .btn {
@@ -519,6 +480,10 @@ h1 {
     
     .search-bar input {
         width: 120px;
+    }
+    
+    .controls {
+        justify-content: center;
     }
 }
 
@@ -539,15 +504,17 @@ h1 {
     .controls {
         padding: 10px 8px;
         gap: 8px;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .search-bar {
+        width: 100%;
+        margin-top: 8px;
     }
     
     .search-bar input {
         width: 100px;
-    }
-    
-    .btn {
-        padding: 4px 8px;
-        font-size: 12px;
     }
 }
 
@@ -793,7 +760,7 @@ h1 {
     transform: scale(0.95);
 }
 
-/* 按钮文字类 - 用于在小屏幕上隐藏 */
+/* 按钮文字类 - 保持显示，通过媒体查询隐藏 */
 .btn-text {
     display: inline;
 } 
