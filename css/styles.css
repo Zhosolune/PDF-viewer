@@ -71,6 +71,12 @@ h1 {
     max-width: 100%;
     box-sizing: border-box;
     justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* 确保按钮组之间有适当间距 */
+.zoom-control, .view-mode-control, .search-bar {
+    margin: 0 5px;
 }
 
 /* 增加控制栏在固定状态下的样式 */
@@ -97,6 +103,9 @@ h1 {
     height: 32px;
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .btn:hover {
@@ -443,7 +452,29 @@ h1 {
 }
 
 /* 响应式设计 */
+@media (max-width: 1100px) {
+    /* 首先隐藏导航按钮的文字 */
+    #prev-page .btn-text, #next-page .btn-text {
+        display: none !important;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
 @media (max-width: 960px) {
+    .zoom-control .btn .btn-text, 
+    .view-mode-control .btn .btn-text {
+        display: none !important;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+    }
+    
     .container {
         padding: 16px;
         max-width: 100%;
@@ -457,20 +488,21 @@ h1 {
     
     .controls {
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 12px; /* 减小按钮之间的间距 */
         justify-content: center;
     }
     
     .search-bar {
         margin-top: 10px;
         justify-content: flex-start;
-        flex: 0 0 auto;
+        flex: 0 0 auto; /* 防止搜索栏拉伸或压缩 */
     }
 }
 
 @media (max-width: 780px) {
+    /* 强制隐藏所有按钮文字 */
     .btn .btn-text {
-        display: none !important;
+        display: none !important; /* 使用 !important 确保覆盖其他样式 */
         width: 0;
         height: 0;
         overflow: hidden;
@@ -480,10 +512,11 @@ h1 {
     
     .btn {
         padding: 4px 10px;
-        min-width: 32px;
-        justify-content: center;
+        min-width: 32px; /* 确保图标按钮有合适的最小宽度 */
+        justify-content: center; /* 确保图标居中 */
     }
     
+    /* 保留搜索框的宽度适当值 */
     .search-bar input {
         width: 120px;
     }
@@ -495,32 +528,46 @@ h1 {
 
 @media (max-width: 480px) {
     .input-number {
-        width: 50px;
+        width: 40px;
     }
     
     .page-info {
-        margin: 0 8px;
+        margin: 0 5px;
     }
     
     .btn {
-        padding: 4px 8px;
+        padding: 4px 6px;
         font-size: 12px;
+        min-width: 28px !important; /* 覆盖之前设定的最小宽度 */
     }
     
     .controls {
-        padding: 10px 8px;
-        gap: 8px;
+        padding: 10px 5px;
+        gap: 5px;
         flex-direction: row;
         flex-wrap: wrap;
     }
     
     .search-bar {
         width: 100%;
-        margin-top: 8px;
+        margin-top: 5px;
+        display: flex;
+        justify-content: center;
     }
     
     .search-bar input {
-        width: 100px;
+        width: 80px;
+    }
+    
+    .search-bar .btn {
+        padding: 4px 5px;
+        min-width: 24px !important;
+    }
+    
+    /* 在超小屏幕时减小控件间距 */
+    .zoom-control, .view-mode-control {
+        gap: 2px;
+        margin: 0 2px;
     }
 }
 
@@ -769,4 +816,23 @@ h1 {
 /* 按钮文字类 */
 .btn-text {
     display: inline-block !important;
+}
+
+/* 设置按钮的最小宽度，确保图标可见 */
+#prev-page, #next-page {
+    min-width: 80px;
+}
+
+#zoom-in, #zoom-out {
+    min-width: 32px;
+}
+
+#single-page-view, #double-page-view {
+    min-width: 60px;
+}
+
+/* 搜索栏按钮样式 */
+.search-bar .btn {
+    min-width: 32px;
+    padding: 4px 8px;
 } 
