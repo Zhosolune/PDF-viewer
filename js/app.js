@@ -14,6 +14,7 @@ import gZoom from './features/zoom.js';
 import gSearch from './features/search.js';
 import gFileLoader from './features/fileLoader.js';
 import gResponsiveLayout from './features/responsiveLayout.js';
+import gStickyControls from './features/stickyControls.js';
 
 /**
  * 初始化应用程序
@@ -31,6 +32,9 @@ function initApp() {
         
         // 初始化键盘事件处理
         gEventHandlers.init();
+        
+        // 初始化控制栏吸顶效果
+        gStickyControls.init();
         
         // 显示欢迎消息
         gUI.showMessage('PDF查看器已准备就绪', 'success');

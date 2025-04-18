@@ -5,6 +5,7 @@
     --error-color: #f5222d;
     --font-size-base: 14px;
     --border-radius-base: 2px;
+    --controls-height: 64px;
 }
 
 body {
@@ -62,6 +63,19 @@ h1 {
     padding: 16px;
     border-radius: 2px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: top 0.3s, box-shadow 0.3s;
+}
+
+/* 增加控制栏在固定状态下的样式 */
+.controls.sticky {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.controls.hidden {
+    top: -100px;
 }
 
 .btn {
