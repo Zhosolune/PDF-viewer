@@ -67,6 +67,10 @@ h1 {
     top: 0;
     z-index: 100;
     transition: top 0.3s, box-shadow 0.3s;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* 增加控制栏在固定状态下的样式 */
@@ -453,6 +457,8 @@ h1 {
     
     .controls {
         flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
     }
     
     .search-bar {
@@ -500,6 +506,22 @@ h1 {
     }
 }
 
+@media (max-width: 640px) {
+    .btn-text {
+        display: none;
+    }
+    
+    .btn {
+        padding: 4px 10px;
+        min-width: 32px;
+        justify-content: center;
+    }
+    
+    .search-bar input {
+        width: 120px;
+    }
+}
+
 @media (max-width: 480px) {
     .input-number {
         width: 50px;
@@ -510,16 +532,17 @@ h1 {
     }
     
     .btn {
-        padding: 4px 10px;
+        padding: 4px 8px;
+        font-size: 12px;
     }
     
     .controls {
-        flex-direction: column;
-        gap: 10px;
+        padding: 10px 8px;
+        gap: 8px;
     }
     
     .search-bar input {
-        width: 140px;
+        width: 100px;
     }
     
     .btn {
@@ -768,4 +791,9 @@ h1 {
 
 #zoom-reset:active {
     transform: scale(0.95);
+}
+
+/* 按钮文字类 - 用于在小屏幕上隐藏 */
+.btn-text {
+    display: inline;
 } 
