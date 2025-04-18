@@ -452,8 +452,20 @@ h1 {
 }
 
 /* 响应式设计 */
+@media (max-width: 1280px) {
+    /* 首先隐藏搜索按钮的文字 */
+    .search-bar .btn .btn-text {
+        display: none !important;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
 @media (max-width: 1100px) {
-    /* 首先隐藏导航按钮的文字 */
+    /* 隐藏导航按钮的文字 */
     #prev-page .btn-text, #next-page .btn-text {
         display: none !important;
         width: 0;
@@ -465,6 +477,7 @@ h1 {
 }
 
 @media (max-width: 960px) {
+    /* 隐藏缩放和视图模式按钮的文字 */
     .zoom-control .btn .btn-text, 
     .view-mode-control .btn .btn-text {
         display: none !important;
@@ -487,9 +500,7 @@ h1 {
     }
     
     .controls {
-        flex-wrap: wrap;
         gap: 12px; /* 减小按钮之间的间距 */
-        justify-content: center;
     }
     
     .search-bar {
@@ -500,20 +511,14 @@ h1 {
 }
 
 @media (max-width: 780px) {
-    /* 强制隐藏所有按钮文字 */
-    .btn .btn-text {
-        display: none !important; /* 使用 !important 确保覆盖其他样式 */
-        width: 0;
-        height: 0;
-        overflow: hidden;
-        opacity: 0;
-        visibility: hidden;
+    .controls {
+        gap: 8px; /* 进一步减小间距 */
+        padding: 12px; /* 减小内边距 */
     }
     
-    .btn {
-        padding: 4px 10px;
-        min-width: 32px; /* 确保图标按钮有合适的最小宽度 */
-        justify-content: center; /* 确保图标居中 */
+    .search-bar {
+        flex-basis: 100%; /* 让搜索栏占据整行 */
+        justify-content: center;
     }
     
     /* 保留搜索框的宽度适当值 */
@@ -521,8 +526,12 @@ h1 {
         width: 120px;
     }
     
-    .controls {
-        justify-content: center;
+    .zoom-control, .view-mode-control {
+        margin: 0 4px; /* 减小边距 */
+    }
+    
+    .page-info {
+        margin: 0 8px; /* 适当调整页码信息的边距 */
     }
 }
 
@@ -544,12 +553,9 @@ h1 {
     .controls {
         padding: 10px 5px;
         gap: 5px;
-        flex-direction: row;
-        flex-wrap: wrap;
     }
     
     .search-bar {
-        width: 100%;
         margin-top: 5px;
         display: flex;
         justify-content: center;
@@ -820,7 +826,7 @@ h1 {
 
 /* 设置按钮的最小宽度，确保图标可见 */
 #prev-page, #next-page {
-    min-width: 80px;
+    min-width: 32px; /* 减小最小宽度，避免溢出 */
 }
 
 #zoom-in, #zoom-out {
@@ -828,7 +834,7 @@ h1 {
 }
 
 #single-page-view, #double-page-view {
-    min-width: 60px;
+    min-width: 32px; /* 减小最小宽度，避免溢出 */
 }
 
 /* 搜索栏按钮样式 */
